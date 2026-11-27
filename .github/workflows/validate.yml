@@ -11,7 +11,7 @@ jobs:
     name: Typecheck, build, nitrogen drift
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
@@ -33,7 +33,7 @@ jobs:
           - 'cpp'
           - 'android/src/main/cpp'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: jidicula/clang-format-action@v4.14.0
         with:
           clang-format-version: '16'
