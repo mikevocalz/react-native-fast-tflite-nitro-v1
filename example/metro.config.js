@@ -10,6 +10,8 @@ const RESOLVE_FROM_EXAMPLE = new Set([
   'react',
   'react-native',
   'react-native-nitro-modules',
+  'nitro-core',
+  'react-native-worklets',
 ]);
 
 /**

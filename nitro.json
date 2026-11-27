@@ -1,36 +1,13 @@
 {
   "$schema": "https://nitro.margelo.com/nitro.schema.json",
-  "cxxNamespace": [
-    "tflite"
-  ],
-  "ios": {
-    "iosModuleName": "NitroTflite"
+  "environment": "react-native",
+  "cxxNamespace": ["tflite"],
+  "apple": {
+    "moduleName": "NitroTflite"
   },
   "android": {
-    "androidNamespace": [
-      "tflite"
-    ],
-    "androidCxxLibName": "NitroTflite"
+    "namespace": ["tflite"],
+    "cxxLibName": "NitroTflite"
   },
-  "autolinking": {
-    "TfliteModule": {
-      "all": {
-        "language": "c++",
-        "implementationClassName": "HybridTfliteModule"
-      }
-    },
-    "AssetLoader": {
-      "ios": {
-        "language": "swift",
-        "implementationClassName": "HybridAssetLoader"
-      },
-      "android": {
-        "language": "kotlin",
-        "implementationClassName": "HybridAssetLoader"
-      }
-    }
-  },
-  "ignorePaths": [
-    "**/node_modules"
-  ]
+  "ignorePaths": ["**/node_modules", "example"]
 }

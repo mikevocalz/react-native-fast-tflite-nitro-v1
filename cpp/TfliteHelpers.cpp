@@ -133,12 +133,16 @@ int getTensorTotalLength(const TfLiteTensor* tensor) {
 TfLiteDelegate* getCoreMLDelegate() {
 #ifdef __APPLE__
 #if FAST_TFLITE_ENABLE_CORE_ML
-  TfLiteCoreMlDelegateOptions delegateOptions;
+  // Zero-initialised options are TFLite's documented defaults (Neural Engine
+  // devices only, default CoreML version, no partition limits). 3.0.1 left the
+  // struct uninitialised, so the delegate read stack garbage.
+  TfLiteCoreMlDelegateOptions delegateOptions{};
   TfLiteDelegate* coreMlDelegate = TfLiteCoreMlDelegateCreate(&delegateOptions);
   return coreMlDelegate;
 #else // FAST_TFLITE_ENABLE_CORE_ML
-  throw std::runtime_error("The CoreML Delegate (\"core-ml\") is not enabled! "
-                           "Set `$EnableCoreMLDelegate` to `true` in your Podfile, and rebuild.");
+  throw std::runtime_error(
+      "The CoreML Delegate (\"core-ml\") is not enabled! "
+      "This build was made with FAST_TFLITE_ENABLE_CORE_ML=0; unset it and rebuild.");
 #endif
 #else // __APPLE__
   throw std::runtime_error(

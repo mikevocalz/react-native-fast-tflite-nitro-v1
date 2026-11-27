@@ -1,4 +1,4 @@
-#include "NitroTfliteOnLoad.hpp"
+#include <NitroTflite/private/NitroTfliteOnLoad.hpp>
 #include <fbjni/fbjni.h>
 #include <jni.h>
 

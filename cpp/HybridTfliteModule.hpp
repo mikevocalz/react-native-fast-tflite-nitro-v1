@@ -1,17 +1,18 @@
 #pragma once
 
-#include "HybridTfliteModel.hpp"
-#include "HybridTfliteModuleSpec.hpp"
+#include <NitroTflite/HybridTfliteModuleSpec.hpp>
 
 namespace margelo::nitro::tflite {
 
-class HybridTfliteModule : public HybridTfliteModuleSpec {
+class HybridTfliteModule final : public HybridTfliteModuleSpec {
 public:
-  HybridTfliteModule() : HybridObject(TAG) {}
+  static constexpr auto TAG = "TfliteModule";
+
+  HybridTfliteModule() = default;
 
   // Methods (from HybridTfliteModuleSpec)
   std::shared_ptr<HybridTfliteModelSpec>
-  createModel(const std::shared_ptr<ArrayBuffer>& modelData,
+  createModel(const ArrayBuffer& modelData,
               const std::vector<TensorflowModelDelegate>& delegates) override;
 };
 

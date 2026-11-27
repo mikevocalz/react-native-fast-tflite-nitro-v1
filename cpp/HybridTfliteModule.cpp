@@ -1,5 +1,8 @@
 #include "HybridTfliteModule.hpp"
+#include "HybridTfliteModel.hpp"
 #include "TfliteHelpers.hpp"
+
+#include <memory>
 
 #if defined(ANDROID)
 #include <tflite/c/c_api.h>
@@ -15,7 +18,7 @@ namespace margelo::nitro::tflite {
  * Return a Hardware accelerated delegate, or throws
  * if the given delegate type is not available.
  */
-TfLiteDelegate* getDelegate(TensorflowModelDelegate delegateType) {
+static TfLiteDelegate* getDelegate(TensorflowModelDelegate delegateType) {
   switch (delegateType) {
     case TensorflowModelDelegate::CORE_ML:
       return getCoreMLDelegate();
@@ -31,37 +34,39 @@ TfLiteDelegate* getDelegate(TensorflowModelDelegate delegateType) {
 }
 
 std::shared_ptr<HybridTfliteModelSpec>
-HybridTfliteModule::createModel(const std::shared_ptr<ArrayBuffer>& modelData,
+HybridTfliteModule::createModel(const ArrayBuffer& modelData,
                                 const std::vector<TensorflowModelDelegate>& delegates) {
-  TfLiteModel* model = TfLiteModelCreate(modelData->data(), modelData->size());
+  // The interpreter reads the model's weights from this buffer for its whole lifetime.
+  // A buffer that came from JS only borrows its storage, so take ownership here, on the
+  // JS thread, before the interpreter is created from it.
+  ArrayBuffer ownedModelData = modelData.asOwning();
+  // The model and options are only needed to create the interpreter. unique_ptr frees them
+  // on every path, including when a delegate below throws.
+  std::unique_ptr<TfLiteModel, decltype(&TfLiteModelDelete)> model(
+      TfLiteModelCreate(ownedModelData.data(), ownedModelData.size()), &TfLiteModelDelete);
   if (model == nullptr) {
     throw std::runtime_error("Failed to create TFLite model from data!");
   }
 
   // Configure interpreter via options
-  TfLiteInterpreterOptions* options = TfLiteInterpreterOptionsCreate();
+  std::unique_ptr<TfLiteInterpreterOptions, decltype(&TfLiteInterpreterOptionsDelete)> options(
+      TfLiteInterpreterOptionsCreate(), &TfLiteInterpreterOptionsDelete);
 
   // Add all hardware accelerated delegates (e.g. GPU, NPU, ...)
   // if any. The default CPU delegate will always be available.
   for (const TensorflowModelDelegate& delegateType : delegates) {
     TfLiteDelegate* delegate = getDelegate(delegateType);
-    TfLiteInterpreterOptionsAddDelegate(options, delegate);
+    TfLiteInterpreterOptionsAddDelegate(options.get(), delegate);
   }
 
-  TfLiteInterpreter* interpreter = TfLiteInterpreterCreate(model, options);
-
-  // Options and model object can be deleted immediately after interpreter creation.
-  // (per TFLite C API docs — the model_data buffer must still outlive the interpreter,
-  // which is handled by _modelData shared_ptr in HybridTfliteModel)
-  TfLiteInterpreterOptionsDelete(options);
-  TfLiteModelDelete(model);
-
+  // Per the TFLite C API docs the model_data buffer must outlive the interpreter,
+  // which HybridTfliteModel guarantees by holding ownedModelData.
+  TfLiteInterpreter* interpreter = TfLiteInterpreterCreate(model.get(), options.get());
   if (interpreter == nullptr) {
     throw std::runtime_error("Failed to create TFLite interpreter!");
   }
 
-  // Wrap in HybridTfliteModel — stores shared_ptr<ArrayBuffer> to keep model data bytes alive
-  return std::make_shared<HybridTfliteModel>(interpreter, modelData, delegates);
+  return std::make_shared<HybridTfliteModel>(interpreter, std::move(ownedModelData), delegates);
 }
 
 } // namespace margelo::nitro::tflite

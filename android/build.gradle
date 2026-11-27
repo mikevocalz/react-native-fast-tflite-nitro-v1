@@ -7,7 +7,7 @@ buildscript {
   }
 
   dependencies {
-    classpath "com.android.tools.build:gradle:9.1.0"
+    classpath "com.android.tools.build:gradle:9.3.1"
   }
 }
 
@@ -20,6 +20,9 @@ apply plugin: "com.android.library"
 apply plugin: 'org.jetbrains.kotlin.android'
 apply from: '../nitrogen/generated/android/NitroTflite+autolinking.gradle'
 apply from: "./fix-prefab.gradle"
+
+// Nitro V1 supports the New Architecture only.
+apply plugin: "com.facebook.react"
 
 def getExtOrDefault(name) {
   return rootProject.ext.has(name) ? rootProject.ext.get(name) : project.properties["NitroTflite_" + name]
@@ -107,7 +110,9 @@ android {
   }
 
   sourceSets {
-    main {}
+    main {
+      java.srcDirs += ["${project.buildDir}/generated/source/codegen/java"]
+    }
   }
 }
 
@@ -124,10 +129,8 @@ configurations {
 }
 
 dependencies {
-  // For < 0.71, this will be from the local maven repo
-  // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
-  //noinspection GradleDynamicVersion
-  implementation "com.facebook.react:react-native:+"
+  // The React Native Gradle plugin supplies the version.
+  implementation "com.facebook.react:react-android"
 
   // Add a dependency on NitroModules
   implementation project(":react-native-nitro-modules")

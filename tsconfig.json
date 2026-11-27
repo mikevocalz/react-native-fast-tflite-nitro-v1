@@ -1,6 +1,5 @@
 {
   "compilerOptions": {
-    "allowJs": false,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,
     "esModuleInterop": true,
@@ -8,28 +7,24 @@
     "jsx": "react-native",
     "lib": ["esnext"],
     "module": "esnext",
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
+    "noEmit": true,
     "noFallthroughCasesInSwitch": true,
     "noImplicitReturns": true,
-    "noStrictGenericChecks": false,
+    "noUncheckedIndexedAccess": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "noUncheckedIndexedAccess": true,
     "resolveJsonModule": true,
+    "resolvePackageJsonImports": true,
     "skipLibCheck": true,
     "strict": true,
     "target": "esnext",
+    "types": ["node"],
+    "verbatimModuleSyntax": true,
+    "declaration": true,
+    "rootDir": "src",
     "outDir": "lib"
   },
-  "include": [
-    "src",
-    ".eslintrc.js",
-    "babel.config.js",
-  ],
-  "exclude": [
-    "node_modules",
-    "lib",
-    "docs",
-    "example"
-  ]
+  "include": ["src"],
+  "exclude": ["node_modules", "lib", "example", "src/expo-plugin"]
 }

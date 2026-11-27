@@ -1,19 +1,12 @@
 import { Image } from 'react-native'
-import { NitroModules } from 'react-native-nitro-modules'
-import type {
-  AssetLoader,
-  TfliteModel,
-  TfliteModule,
-  TensorflowModelDelegate,
-} from './specs/Tflite.nitro'
+import { getAssetLoader } from './getAssetLoader'
+import { getTfliteModule } from './getTfliteModule'
+import type { TfliteModel } from './specs/TfliteModel.nitro'
+import type { TensorflowModelDelegate } from './specs/TensorflowModelDelegate'
 
 // In React Native, `require(..)` returns a number.
 type Require = number
 export type ModelSource = Require | { url: string }
-
-const assetLoader = NitroModules.createHybridObject<AssetLoader>('AssetLoader')
-const tfliteModule =
-  NitroModules.createHybridObject<TfliteModule>('TfliteModule')
 
 /**
  * Load a Tensorflow Lite Model from the given `.tflite` asset.
@@ -33,6 +26,11 @@ export async function loadTensorflowModel(
   if (typeof source === 'number') {
     console.log(`Loading Tensorflow Lite Model ${source}`)
     const asset = Image.resolveAssetSource(source)
+    if (asset == null) {
+      throw new Error(
+        `TFLite: Could not resolve the asset ${source}! Make sure \`tflite\` is listed in your metro.config.js \`assetExts\`.`
+      )
+    }
     uri = asset.uri
     console.log(`Resolved Model path: ${asset.uri}`)
   } else if (typeof source === 'object' && 'url' in source) {
@@ -42,6 +40,6 @@ export async function loadTensorflowModel(
       'TFLite: Invalid source passed! Source should be either a React Native require(..) or a `{ url: string }` object!'
     )
   }
-  const data = await assetLoader.loadAsset(uri)
-  return tfliteModule.createModel(data, delegates)
+  const data = await getAssetLoader().loadAsset(uri)
+  return getTfliteModule().createModel(data, delegates)
 }

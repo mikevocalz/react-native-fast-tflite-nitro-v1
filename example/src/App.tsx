@@ -1,128 +1,113 @@
 import * as React from 'react';
 
 import {
-  StyleSheet,
-  View,
-  Text,
   ActivityIndicator,
   Platform,
+  SafeAreaView,
+  ScrollView,
+  StyleSheet,
+  Text,
 } from 'react-native';
 import {
-  Tensor,
-  TensorflowModel,
+  type Tensor,
+  type TensorflowModel,
+  type TensorflowModelDelegate,
   useTensorflowModel,
 } from 'react-native-fast-tflite';
-import { NitroModules } from 'react-native-nitro-modules';
-import {
-  Camera,
-  useCameraDevice,
-  useCameraPermission,
-  useFrameProcessor,
-} from 'react-native-vision-camera';
-import { useResizePlugin } from 'vision-camera-resize-plugin';
+import { createWorkletRuntime, runOnRuntimeSync } from 'react-native-worklets';
 
 function tensorToString(tensor: Tensor): string {
   return `\n  - ${tensor.dataType} ${tensor.name}[${tensor.shape}]`;
 }
 function modelToString(model: TensorflowModel): string {
   return (
-    `TFLite Model (${model.delegates.join(', ')}):\n` +
+    `TFLite Model (${model.delegates.join(', ') || 'cpu'}):\n` +
     `- Inputs: ${model.inputs.map(tensorToString).join('')}\n` +
     `- Outputs: ${model.outputs.map(tensorToString).join('')}`
   );
 }
 
+// EfficientDet's fourth output holds the number of detections.
+function numDetections(outputs: ArrayBuffer[]): number {
+  const buffer = outputs[3];
+  return buffer == null ? 0 : new Float32Array(buffer)[0] ?? 0;
+}
+
+// A separate JS runtime on its own thread, like the one VisionCamera v5
+// runs Frame Processors on.
+const inferenceRuntime = createWorkletRuntime({ name: 'tflite-inference' });
+
+const DELEGATES: TensorflowModelDelegate[] =
+  Platform.OS === 'ios' ? ['core-ml'] : [];
+
 export default function App(): React.ReactNode {
-  const { hasPermission, requestPermission } = useCameraPermission();
-  const device = useCameraDevice('back');
-
   // from https://www.kaggle.com/models/tensorflow/efficientdet/frameworks/tfLite
-  const model = useTensorflowModel(
+  const plugin = useTensorflowModel(
     require('../assets/efficientdet.tflite'),
-    Platform.OS === 'ios' ? ['core-ml'] : [],
+    DELEGATES,
   );
-  const actualModel = model.state === 'loaded' ? model.model : undefined;
-  // Nitro HybridObjects use jsi::NativeState which is not directly accessible
-  // in VisionCamera's worklet runtime. Boxing converts the HybridObject into a
-  // jsi::HostObject so it can safely cross the worklet boundary. Call .unbox()
-  // inside the worklet to recover the full TfliteModel.
-  const boxedModel = React.useMemo(
-    () => (actualModel != null ? NitroModules.box(actualModel) : undefined),
-    [actualModel],
-  );
+  const model = plugin.state === 'loaded' ? plugin.model : undefined;
+  const [log, setLog] = React.useState<string[]>([]);
 
   React.useEffect(() => {
-    if (actualModel == null) return;
-    console.log(`Model loaded! Shape:\n${modelToString(actualModel)}]`);
-  }, [actualModel]);
+    if (model == null) return;
+    const lines: string[] = [modelToString(model)];
+    const input = new ArrayBuffer(320 * 320 * 3);
 
-  const { resize } = useResizePlugin();
+    const jsResult = model.runSync([input]);
+    lines.push(`runSync (JS thread): ${numDetections(jsResult)} detections`);
 
-  const frameProcessor = useFrameProcessor(
-    frame => {
+    // Nitro registers HybridObjects as worklet-serializable, so the model
+    // can be captured directly. VisionCamera v5's useFrameOutput worklets
+    // call model.runSync(...) the same way.
+    const workletDetections = runOnRuntimeSync(inferenceRuntime, () => {
       'worklet';
-      if (boxedModel == null) {
-        // model is still loading...
-        return;
-      }
+      const outputs = model.runSync([new ArrayBuffer(320 * 320 * 3)]);
+      const buffer = outputs[3];
+      return buffer == null ? 0 : new Float32Array(buffer)[0] ?? 0;
+    });
+    lines.push(`runSync (worklet runtime): ${workletDetections} detections`);
+    setLog(lines);
 
-      // Unbox the HybridObject inside the worklet to access runSync
-      const tflite = boxedModel.unbox();
-      console.log(`Running inference on ${frame}`);
-      const resized = resize(frame, {
-        scale: {
-          width: 320,
-          height: 320,
-        },
-        pixelFormat: 'rgb',
-        dataType: 'uint8',
+    model
+      .run([input])
+      .then(outputs => {
+        setLog(current => [
+          ...current,
+          `run (async): ${numDetections(outputs)} detections`,
+        ]);
+      })
+      .catch((error: unknown) => {
+        setLog(current => [...current, `run (async) failed: ${error}`]);
       });
-      const inputBuffer = resized.buffer.slice(
-        resized.byteOffset,
-        resized.byteOffset + resized.byteLength,
-      );
-      const result = tflite.runSync([inputBuffer]);
-      const num_detections = new Float32Array(result[3])[0] ?? 0;
-      console.log('Result: ' + num_detections);
-    },
-    [boxedModel],
-  );
-
-  React.useEffect(() => {
-    requestPermission();
-  }, [requestPermission]);
-
-  console.log(`Model: ${model.state} (${model.model != null})`);
+  }, [model]);
 
   return (
-    <View style={styles.container}>
-      {hasPermission && device != null ? (
-        <Camera
-          device={device}
-          style={StyleSheet.absoluteFill}
-          isActive={true}
-          frameProcessor={frameProcessor}
-          pixelFormat="yuv"
-        />
-      ) : (
-        <Text>No Camera available.</Text>
-      )}
-
-      {model.state === 'loading' && (
-        <ActivityIndicator size="small" color="white" />
-      )}
-
-      {model.state === 'error' && (
-        <Text>Failed to load model! {model.error.message}</Text>
-      )}
-    </View>
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.content}>
+        {plugin.state === 'loading' && <ActivityIndicator size="small" />}
+        {plugin.state === 'error' && (
+          <Text>Failed to load model! {plugin.error.message}</Text>
+        )}
+        {log.map(line => (
+          <Text key={line} style={styles.line}>
+            {line}
+          </Text>
+        ))}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
+  },
+  content: {
+    padding: 16,
+  },
+  line: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    marginBottom: 8,
   },
 });

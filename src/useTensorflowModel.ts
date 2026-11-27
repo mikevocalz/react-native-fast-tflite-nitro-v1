@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import type { TfliteModel, TensorflowModelDelegate } from './specs/Tflite.nitro'
+import type { TfliteModel } from './specs/TfliteModel.nitro'
+import type { TensorflowModelDelegate } from './specs/TensorflowModelDelegate'
 import { loadTensorflowModel, type ModelSource } from './loadTensorflowModel'
 
 export type TensorflowPlugin =

@@ -1,7 +1,8 @@
 export type ConfigProps = {
   /**
-   * Whether to enable the CoreML GPU acceleration delegate for iOS, or not.
-   * @default false
+   * Ignored. The CoreML delegate is linked by default through SwiftPM; build
+   * with FAST_TFLITE_ENABLE_CORE_ML=0 to leave it out.
+   * @deprecated
    */
   enableCoreMLDelegate?: boolean
   /**

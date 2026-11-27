@@ -1,6 +1,6 @@
 #pragma once
 
-#include "TensorDataType.hpp"
+#include <NitroTflite/TensorDataType.hpp>
 #include <string>
 
 #if defined(ANDROID)

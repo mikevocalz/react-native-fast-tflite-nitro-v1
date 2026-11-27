@@ -1,0 +1,40 @@
+name: Validate
+
+on:
+  push:
+    branches:
+      - nitro-v1
+  pull_request:
+
+jobs:
+  js:
+    name: Typecheck, build, nitrogen drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run build
+      - name: Expo plugin loads
+        run: node -e "require('./app.plugin.js')"
+      - name: Regenerate nitrogen and fail on drift
+        run: |
+          bun run specs
+          git add -A nitrogen
+          git diff --cached --exit-code -- nitrogen
+
+  clang-format:
+    name: clang-format
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        path:
+          - 'cpp'
+          - 'android/src/main/cpp'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jidicula/clang-format-action@v4.14.0
+        with:
+          clang-format-version: '16'
+          check-path: ${{ matrix.path }}

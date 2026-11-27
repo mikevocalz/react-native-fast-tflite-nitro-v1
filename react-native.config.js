@@ -10,7 +10,12 @@ module.exports = {
       /**
        * @type {import('@react-native-community/cli-types').AndroidDependencyParams}
        */
-      android: {},
+      android: {
+        // No Fabric components here. Skipping the descriptor scan also stops
+        // the CLI from globbing the whole repo, which loops forever through
+        // the example's SwiftPM autolinking symlink back to this root.
+        componentDescriptors: [],
+      },
     },
   },
 }

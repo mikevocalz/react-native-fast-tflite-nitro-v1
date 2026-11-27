@@ -15,15 +15,34 @@ A high-performance [TensorFlow Lite](https://www.tensorflow.org/lite) library fo
 - 🖥️ Supports GPU-accelerated delegates (CoreML/Metal/OpenGL)
 - 📸 Easy [VisionCamera](https://github.com/mrousavy/react-native-vision-camera) integration
 
+## Nitro V1 port
+
+This repository is a port of react-native-fast-tflite 3.0.1 to Nitro Modules V1 (`1.0.0-alpha` nightlies). It is not published to npm. Install it from the `release/react-native-fast-tflite` branch, which holds the built package:
+
+```json
+"react-native-fast-tflite": "github:mikevocalz/react-native-fast-tflite-nitro-v1#release/react-native-fast-tflite"
+```
+
+Requirements: React Native 0.88 or newer with the New Architecture, iOS 16 or newer, and `react-native-nitro-modules` / `nitro-core` V1.
+
+Differences from npm 3.0.1:
+
+- iOS links through SwiftPM (`Package.swift`). The TensorFlow Lite C xcframeworks come from the [`tensorflowlitec-2.17.0`](https://github.com/mikevocalz/react-native-fast-tflite-nitro-v1/releases/tag/tensorflowlitec-2.17.0) release, which holds the static archives from Google's TensorFlowLiteC 2.17.0 pod repackaged as static-library xcframeworks (no recompiling; see `scripts/repack-tflite-xcframeworks.sh`), plus TensorFlow's LICENSE and a NOTICE. The podspec only carries metadata.
+- The CoreML delegate (`core-ml`) is linked by default. Set `FAST_TFLITE_ENABLE_CORE_ML=0` in the environment that resolves the package to leave it out. The `$EnableCoreMLDelegate` Podfile flag and the Expo plugin's `enableCoreMLDelegate` option no longer do anything.
+- `run()` and `runSync()` throw when an input buffer's size does not match its tensor. 3.0.1 ignored the copy failure and ran on stale input.
+- `loadTensorflowModel` throws a clear error when a `require(..)` asset cannot be resolved.
+- `TensorDataType` is exported as a type.
+- Two 3.0.1 behaviors are unchanged: hardware delegates are never freed, and nothing locks the interpreter when `run()` and `runSync()` overlap on the same model.
+
 ## Migrating from v2
 
 If you are upgrading from v2, see the [Migration Guide](./MIGRATION_V2_TO_V3.md) for breaking changes and upgrade steps.
 
 ## Installation
 
-1. Add the npm packages:
+1. Add the packages (see [Nitro V1 port](#nitro-v1-port) for the git URL):
    ```sh
-   yarn add react-native-fast-tflite react-native-nitro-modules
+   bun add react-native-fast-tflite@github:mikevocalz/react-native-fast-tflite-nitro-v1#release/react-native-fast-tflite react-native-nitro-modules nitro-core
    ```
 2. In `metro.config.js`, add `tflite` as a supported asset extension:
    ```js
@@ -35,7 +54,7 @@ If you are upgrading from v2, see the [Migration Guide](./MIGRATION_V2_TO_V3.md)
    ```
    This allows you to drop `.tflite` files into your app and swap them out at runtime without rebuilding. 🔥
 3. (Optional) To enable GPU delegates, see [Using GPU Delegates](#using-gpu-delegates) below.
-4. Run your app (`yarn android` / `npx pod-install && yarn ios`)
+4. Run your app (`npx react-native run-android` / `npx react-native run-ios`). The app's iOS project must use SwiftPM autolinking; there is no `pod install` step.
 
 ## Usage
 
@@ -165,47 +184,16 @@ GPU Delegates offer faster, GPU-accelerated computation. There are multiple dele
 
 #### CoreML (iOS)
 
-##### Expo
+The CoreML delegate and the `CoreML` framework are linked by default, so there is nothing to configure. Request the delegate when loading:
 
-Use the config plugin in your expo config (`app.json`, `app.config.json` or `app.config.js`):
-
-```json
-{
-  "name": "my app",
-  "plugins": [
-    [
-      "react-native-fast-tflite",
-      {
-        "enableCoreMLDelegate": true
-      }
-    ]
-  ]
-}
+```ts
+const model = await loadTensorflowModel(
+  require('assets/my-model.tflite'),
+  ['core-ml']
+)
 ```
 
-##### Bare React Native
-
-1. Set `$EnableCoreMLDelegate` to `true` in your `Podfile`:
-
-   ```ruby
-   $EnableCoreMLDelegate=true
-
-   # rest of your podfile...
-   ```
-
-2. Open your iOS project in Xcode and add the `CoreML` framework under **General → Frameworks, Libraries and Embedded Content**.
-3. Re-install Pods and build:
-   ```sh
-   cd ios && pod install && cd ..
-   yarn ios
-   ```
-4. Use the CoreML Delegate:
-   ```ts
-   const model = await loadTensorflowModel(
-     require('assets/my-model.tflite'),
-     ['core-ml']
-   )
-   ```
+To build without it, set `FAST_TFLITE_ENABLE_CORE_ML=0` in the environment of the process that resolves the Swift package (Xcode or `xcodebuild`), then clean the package cache. Asking for `core-ml` in such a build throws.
 
 > [!NOTE]
 > Not all model operations are supported on the CoreML delegate. Make sure your model is compatible.

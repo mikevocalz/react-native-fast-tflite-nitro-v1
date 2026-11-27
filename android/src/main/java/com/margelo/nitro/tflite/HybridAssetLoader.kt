@@ -1,18 +1,20 @@
 package com.margelo.nitro.tflite
 
-import androidx.annotation.Keep
-import com.facebook.proguard.annotations.DoNotStrip
 import com.margelo.nitro.core.ArrayBuffer
 import com.margelo.nitro.core.Promise
 import java.net.URL
 
-@Keep
-@DoNotStrip
 class HybridAssetLoader : HybridAssetLoaderSpec() {
+  companion object : HybridAssetLoaderSpec.Companion {
+    override fun constructor(): HybridAssetLoader = HybridAssetLoader()
+  }
+
   override fun loadAsset(path: String): Promise<ArrayBuffer> {
-    return Promise.async {
+    // URL.readBytes() blocks until the file or download is read,
+    // so it runs on Nitro's shared I/O pool instead of the JS thread.
+    return Promise.parallel {
       val bytes = URL(path).readBytes()
-      return@async ArrayBuffer.copy(bytes)
+      return@parallel ArrayBuffer.copy(bytes)
     }
   }
 }
