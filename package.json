@@ -1,0 +1,99 @@
+{
+  "name": "react-native-fast-tflite",
+  "version": "3.0.1-nitro-v1.0",
+  "description": "High-performance TensorFlow Lite library for React Native, built with Nitro Modules (Nitro V1 alpha port)",
+  "main": "lib/index",
+  "module": "lib/index",
+  "types": "lib/index.d.ts",
+  "react-native": "lib/index",
+  "source": "src/index",
+  "imports": {
+    "#nitro/*": "./nitrogen/generated/shared/javascript/*.cjs"
+  },
+  "files": [
+    "src",
+    "lib",
+    "nitrogen",
+    "android/build.gradle",
+    "android/gradle.properties",
+    "android/fix-prefab.gradle",
+    "android/CMakeLists.txt",
+    "android/src",
+    "!android/src/main/cpp/lib",
+    "apple/**/*.swift",
+    "cpp/**/*.h",
+    "cpp/**/*.hpp",
+    "cpp/**/*.cpp",
+    "nitro.json",
+    "Package.swift",
+    "*.podspec",
+    "react-native.config.js",
+    "app.plugin.js",
+    "README.md",
+    "NOTICE"
+  ],
+  "keywords": [
+    "react-native",
+    "tensorflow",
+    "vision-camera",
+    "tflite",
+    "lite",
+    "tensorflowlite",
+    "tensorflow-lite",
+    "visioncamera",
+    "react-native-vision-camera",
+    "vision",
+    "camera",
+    "ios",
+    "android",
+    "nitro"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mikevocalz/react-native-fast-tflite-nitro-v1.git"
+  },
+  "author": "Marc Rousavy <me@mrousavy.com> (https://github.com/mrousavy)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mikevocalz/react-native-fast-tflite-nitro-v1/issues"
+  },
+  "homepage": "https://github.com/mikevocalz/react-native-fast-tflite-nitro-v1#readme",
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org/"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": ">=0.88.0-0",
+    "nitro-core": "*",
+    "react-native-nitro-modules": "*"
+  },
+  "peerDependenciesMeta": {
+    "nitro-core": {
+      "optional": true
+    },
+    "react-native-nitro-modules": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": ">= 20.19.4"
+  },
+  "prettier": {
+    "quoteProps": "consistent",
+    "semi": false,
+    "singleQuote": true,
+    "tabWidth": 2,
+    "trailingComma": "es5",
+    "useTabs": false
+  },
+  "swiftpmConfig": {
+    "name": "NitroTflite",
+    "dependencies": [
+      "react-native-nitro-modules"
+    ]
+  },
+  "gitHead": "fccc6a37485cb43764e2a454fdb9d36339f406e2",
+  "nitroV1": {
+    "sourceCommit": "fccc6a37485cb43764e2a454fdb9d36339f406e2"
+  }
+}

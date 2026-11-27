@@ -1,0 +1,28 @@
+react-native-fast-tflite-nitro-v1
+
+This is a port of react-native-fast-tflite 3.0.1 to Nitro Modules V1.
+react-native-fast-tflite is Copyright (c) 2023 Marc Rousavy and is MIT
+licensed; see LICENSE. The upstream project is
+https://github.com/mrousavy/react-native-fast-tflite.
+
+The port keeps that license. Changes from 3.0.1 are recorded in this
+repository's git history, starting after upstream tag v3.0.1 (51fa54a).
+
+Third-party binaries
+
+This repository contains no TensorFlow code or binaries. The build fetches
+them:
+
+- iOS: Package.swift downloads the TensorFlowLiteC and TensorFlowLiteCCoreML
+  2.17.0 xcframeworks from the tensorflowlitec-2.17.0 release of this
+  repository:
+  https://github.com/mikevocalz/react-native-fast-tflite-nitro-v1/releases/tag/tensorflowlitec-2.17.0
+  They hold the static archives and headers from Google's TensorFlowLiteC
+  2.17.0 pod, repackaged as static-library xcframeworks without recompiling
+  (scripts/repack-tflite-xcframeworks.sh), and are licensed under the Apache
+  License 2.0. That release also carries the TensorFlow LICENSE (from tag
+  v2.17.0) and a NOTICE describing their source.
+
+- Android: android/build.gradle resolves com.google.ai.edge.litert:litert and
+  com.google.ai.edge.litert:litert-gpu 1.4.0 from Maven Central. LiteRT is
+  Copyright Google LLC and licensed under the Apache License 2.0.

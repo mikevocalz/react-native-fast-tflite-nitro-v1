@@ -1,0 +1,13 @@
+{
+  "$schema": "https://nitro.margelo.com/nitro.schema.json",
+  "environment": "react-native",
+  "cxxNamespace": ["tflite"],
+  "apple": {
+    "moduleName": "NitroTflite"
+  },
+  "android": {
+    "namespace": ["tflite"],
+    "cxxLibName": "NitroTflite"
+  },
+  "ignorePaths": ["**/node_modules", "example"]
+}

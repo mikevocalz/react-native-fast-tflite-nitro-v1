@@ -1,0 +1,51 @@
+{
+  "version": 2,
+  "classes": {
+    "AssetLoader": {
+      "android": {
+        "implementation": {
+          "className": "HybridAssetLoader"
+        },
+        "language": "kotlin"
+      },
+      "apple": {
+        "implementation": {
+          "className": "HybridAssetLoader"
+        },
+        "language": "swift"
+      }
+    },
+    "TfliteModel": {
+      "android": {
+        "implementation": {
+          "className": "HybridTfliteModel",
+          "include": "\"HybridTfliteModel.hpp\""
+        },
+        "language": "c++"
+      },
+      "apple": {
+        "implementation": {
+          "className": "HybridTfliteModel",
+          "include": "\"HybridTfliteModel.hpp\""
+        },
+        "language": "c++"
+      }
+    },
+    "TfliteModule": {
+      "android": {
+        "implementation": {
+          "className": "HybridTfliteModule",
+          "include": "\"HybridTfliteModule.hpp\""
+        },
+        "language": "c++"
+      },
+      "apple": {
+        "implementation": {
+          "className": "HybridTfliteModule",
+          "include": "\"HybridTfliteModule.hpp\""
+        },
+        "language": "c++"
+      }
+    }
+  }
+}
