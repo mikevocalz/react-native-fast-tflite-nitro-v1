@@ -27,6 +27,7 @@
     "nitro.json",
     "Package.swift",
     "*.podspec",
+    "nitro_v1_cocoapods.rb",
     "react-native.config.js",
     "app.plugin.js",
     "README.md",
